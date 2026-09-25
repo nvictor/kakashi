@@ -1,0 +1,16 @@
+schema_version: 1
+id: listening-port
+title: Inspect a listening port
+description: Find processes listening on a TCP port on macOS. Requires lsof; visibility depends on your user permissions.
+tags: [network, port, process]
+shell: posix
+inputs:
+  - id: port-filter
+    label: TCP port filter
+    type: string
+    default: '-iTCP:8080'
+    description: Use the complete lsof option, such as -iTCP:3000.
+steps:
+  - id: listeners
+    title: Find the listening process
+    command: lsof -nP {{port-filter}} -sTCP:LISTEN

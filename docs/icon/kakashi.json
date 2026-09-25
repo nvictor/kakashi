@@ -1,0 +1,37 @@
+{
+  "app_concept": "Kakashi is a macOS app named after the Naruto character; its icon is a companion to the Jiraiya portrait icon.",
+  "primary_metaphor": "A calm masked shinobi portrait with broad silver hair and a tilted forehead protector covering one eye",
+  "supporting_motifs": [
+    "One relaxed crescent eye",
+    "Blank metal forehead plate",
+    "Sage-green vest corners framing a charcoal mask"
+  ],
+  "composition_family": "fused-with-base",
+  "tone": [
+    "cartoonish",
+    "anime",
+    "calm",
+    "native macOS"
+  ],
+  "palette_hints": [
+    "cool silver hair",
+    "warm peach skin",
+    "slate metal",
+    "charcoal-blue cloth",
+    "sage-green vest"
+  ],
+  "include_symbols": [
+    "broad edge-fused hair spikes",
+    "tilted forehead protector covering the viewer-right eye",
+    "high dark face mask",
+    "green vest corners"
+  ],
+  "avoid_symbols": [
+    "text",
+    "photorealistic likeness",
+    "tiny costume details",
+    "heavy facial modeling",
+    "filter-dependent shadows"
+  ],
+  "small_size_risk": "low"
+}

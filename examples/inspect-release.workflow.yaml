@@ -1,0 +1,21 @@
+schema_version: 1
+id: inspect-release
+title: Inspect a Git release tag
+description: Inspect an existing local release tag without fetching or changing the repository. Requires Git and a local checkout containing the tag.
+tags: [git, release, tag]
+shell: posix
+inputs:
+  - id: repository
+    label: Repository
+    type: path
+  - id: tag
+    label: Release tag
+    type: string
+    default: v1.0.0
+steps:
+  - id: summary
+    title: Read the tag summary
+    command: git -C {{repository}} show --no-patch --format=fuller {{tag}} --
+  - id: files
+    title: Review the release files
+    command: git -C {{repository}} ls-tree -r --name-only {{tag}} --

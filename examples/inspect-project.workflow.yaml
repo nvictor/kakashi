@@ -1,0 +1,25 @@
+schema_version: 1
+id: inspect-project
+title: Inspect a Swift project
+description: Review local changes and test a Swift package. Requires Git and the Swift toolchain.
+tags: [git, swift, development]
+shell: posix
+inputs:
+  - id: project-dir
+    label: Project directory
+    type: path
+    description: Absolute path to the Swift package repository.
+  - id: configuration
+    label: Build configuration
+    type: choice
+    default: debug
+    options: [debug, release]
+steps:
+  - id: status
+    title: Review changes
+    description: Show the branch and working tree changes.
+    command: git -C {{project-dir}} status --short --branch
+  - id: test
+    title: Run tests
+    description: Run the package tests with the selected configuration.
+    command: swift test --package-path {{project-dir}} --configuration {{configuration}}

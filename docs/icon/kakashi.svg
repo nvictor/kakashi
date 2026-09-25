@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 512 512">
+  <title>Kakashi masked shinobi portrait</title>
+  <desc>A minimal Kakashi portrait in the Jiraiya icon family: broad silver hair, a tilted forehead protector covering the left eye, a calm visible eye, charcoal mask, and sage-green vest fused into a rounded square. Self-contained vector geometry and gradients, without filters.</desc>
+  <defs>
+    <linearGradient id="skin" x1="0" y1="0" x2="0.7" y2="1"><stop stop-color="#F8CAA4"/><stop offset="1" stop-color="#DD987B"/></linearGradient>
+    <linearGradient id="hair" x1="0" y1="0" x2="0.7" y2="1"><stop stop-color="#F7F9F7"/><stop offset="1" stop-color="#BBC9CF"/></linearGradient>
+    <linearGradient id="cloth" x1="0" y1="0" x2="0.7" y2="1"><stop stop-color="#414E60"/><stop offset="1" stop-color="#232D3C"/></linearGradient>
+    <linearGradient id="metal" x1="0" y1="0" x2="0.7" y2="1"><stop stop-color="#E1E7E6"/><stop offset="1" stop-color="#9CAFB6"/></linearGradient>
+    <linearGradient id="vest" x1="0" y1="0" x2="0.7" y2="1"><stop stop-color="#82987A"/><stop offset="1" stop-color="#506A54"/></linearGradient>
+    <clipPath id="shellClip"><rect x="24" y="24" width="464" height="464" rx="104"/></clipPath>
+  </defs>
+  <g transform="translate(-26.4827586 -26.4827586) scale(1.103448276)">
+    <rect x="24" y="24" width="464" height="464" rx="104" fill="url(#skin)"/>
+    <g clip-path="url(#shellClip)">
+      <!-- Broad, slanted cloth covers Kakashi's left eye (viewer right). -->
+      <path d="M24 132 Q258 155 488 220 V316 Q375 301 271 260 L238 210 Q115 201 24 185 Z" fill="#B97B63"/>
+      <path d="M24 120 Q258 143 488 208 V304 Q375 289 271 248 L238 198 Q115 189 24 173 Z" fill="url(#cloth)"/>
+      <path d="M263 182 Q340 194 422 216 L415 278 Q337 264 280 240 Z" fill="#172432"/>
+      <path d="M264 174 Q342 185 424 208 L417 269 Q340 255 281 232 Z" fill="url(#metal)"/>
+      <!-- Hair shares the shell silhouette, as in the Jiraiya reference. -->
+      <path d="M24 24 H488 V152 L433 121 L395 175 L344 107 L294 155 L244 88 L190 145 L144 77 L85 132 L62 102 L24 135 Z" fill="#75868F"/>
+      <path d="M24 24 H488 V141 L433 110 L395 164 L344 96 L294 144 L244 77 L190 134 L144 66 L85 121 L62 91 L24 124 Z" fill="url(#hair)"/>
+      <!-- High mask crest makes the character readable without extra facial modeling. -->
+      <path d="M24 293 Q141 313 246 279 Q302 294 353 312 Q427 334 488 311 V488 H24 Z" fill="#BC846C"/>
+      <path d="M24 303 Q141 323 246 289 Q302 304 353 322 Q427 344 488 321 V488 H24 Z" fill="url(#cloth)"/>
+      <path d="M24 392 Q91 366 159 370 L195 488 H24 Z M488 392 Q421 366 353 370 L317 488 H488 Z" fill="url(#vest)"/>
+    </g>
+    <!-- Same relaxed crescent language as Jiraiya's closed eyes. -->
+    <path d="M112 239 Q162 261 211 234 Q181 276 126 263 Z" fill="#293335"/>
+  </g>
+</svg>

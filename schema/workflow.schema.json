@@ -1,0 +1,169 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/nvictor/kakashi/blob/main/schema/workflow.schema.json",
+  "title": "Kakashi workflow version 1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "id",
+    "title",
+    "shell",
+    "steps"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "title": {
+      "type": "string",
+      "pattern": "\\S"
+    },
+    "description": {
+      "type": "string"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "shell": {
+      "const": "posix"
+    },
+    "inputs": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/input"
+      }
+    },
+    "steps": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/step"
+      }
+    }
+  },
+  "$defs": {
+    "input": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "label",
+        "type"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]*$"
+        },
+        "label": {
+          "type": "string",
+          "pattern": "\\S"
+        },
+        "type": {
+          "enum": [
+            "string",
+            "path",
+            "choice",
+            "secret"
+          ]
+        },
+        "description": {
+          "type": "string"
+        },
+        "required": {
+          "type": "boolean",
+          "default": true
+        },
+        "default": {
+          "type": "string",
+          "pattern": "^[^\\u0000\\r\\n]*$"
+        },
+        "options": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^[^\\u0000\\r\\n]*$",
+            "minLength": 1
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "secret"
+              }
+            }
+          },
+          "then": {
+            "not": {
+              "required": [
+                "default"
+              ]
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "choice"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "options"
+            ]
+          },
+          "else": {
+            "not": {
+              "required": [
+                "options"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "step": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "title",
+        "command"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]*$"
+        },
+        "title": {
+          "type": "string",
+          "pattern": "\\S"
+        },
+        "description": {
+          "type": "string"
+        },
+        "command": {
+          "type": "string",
+          "pattern": "\\S"
+        }
+      }
+    }
+  },
+  "$comment": "Semantic validator additionally checks ID uniqueness, defaults within choice options, and template syntax/context. YAML must contain one document, no aliases/anchors/custom tags/duplicate keys, and be UTF-8 under 1 MiB."
+}
