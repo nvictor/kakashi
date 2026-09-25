@@ -14,6 +14,13 @@
     <key>signingCertificate</key>
     <string>Developer ID Application: Victor Noagbodji (2DZ6D8C78T)</string>
 
+    <!-- Map bundle IDs to provisioning profile names -->
+    <key>provisioningProfiles</key>
+    <dict>
+        <key>com.mellowfleet.Kakashi</key>
+        <string>Kakashi</string>
+    </dict>
+
     <key>architectures</key>
     <array>
         <string>arm64</string>
