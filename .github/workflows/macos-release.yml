@@ -66,11 +66,6 @@ jobs:
         run: |
           security set-key-partition-list -S apple-tool:,apple: -k "" build.keychain
 
-      - name: Install Provisioning Profile
-        run: |
-          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
-          echo "${{ secrets.KAKASHI_PROVISIONING_PROFILE }}" | base64 --decode > ~/Library/MobileDevice/Provisioning\ Profiles/Kakashi.provisionprofile
-
       - name: Build and Archive App
         run: |
           set -o pipefail
@@ -144,4 +139,3 @@ jobs:
         run: |
           security delete-keychain build.keychain || true
           rm -f build/DeveloperID.p12 build/sparkle_ed25519.key
-          rm -f "$HOME/Library/MobileDevice/Provisioning Profiles/Kakashi.provisionprofile"
