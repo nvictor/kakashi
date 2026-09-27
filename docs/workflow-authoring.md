@@ -35,6 +35,7 @@ The structural contract is [workflow.schema.json](../schema/workflow.schema.json
 | `description` | No | String, default empty |
 | `tags` | No | Array of strings, default empty |
 | `inputs` | No | Ordered array of input definitions, default empty |
+| `presets` | No | Ordered array of presets, default empty |
 | `steps` | Yes | Nonempty ordered array of steps |
 
 | Input field | Required | Value |
@@ -54,11 +55,35 @@ The structural contract is [workflow.schema.json](../schema/workflow.schema.json
 | `command` | Yes | Nonblank string, including YAML multiline blocks |
 | `description` | No | String, default empty |
 
+| Preset field | Required | Value |
+| --- | --- | --- |
+| `name` | Yes | Nonblank string, unique among this workflow's presets |
+| `values` | Yes | Nonempty mapping of input IDs to string values |
+
 Quote numeric, boolean, or date-looking strings, such as `default: '8080'`. YAML anchors, aliases, custom tags, duplicate keys, and multiple documents are unsupported.
 
 Input values and defaults cannot contain NUL, carriage returns, or newlines. Path values are literal strings: use absolute paths, because `~`, environment variables, and glob patterns are not expanded. Paths need not exist.
 
 An empty required input blocks only steps referencing it. An optional unset input renders as the empty argument `''`.
+
+## Presets
+
+Use presets when the same group of values repeats, such as one repository, project, and target per app. Picking a preset fills those inputs. Inputs it does not list keep their values, and every value stays editable.
+
+```yaml
+presets:
+  - name: Framed
+    values:
+      repo: /Users/victor/Developer/Framed
+      project: Framed/Framed.xcodeproj/project.pbxproj
+      target: Framed
+```
+
+Each key must name a declared input. Presets cannot set secret inputs, and choice values must appear in `options`.
+
+## Saved values
+
+Kakashi saves non-secret input values on your Mac, so they are ready after a relaunch. A saved value resets to the input's default when you edit that input's definition. Secret values stay in memory only. To clear saved values, choose **Forget Saved Values** in Settings.
 
 ## Placeholder subset
 

@@ -5,7 +5,7 @@ import WorkflowCore
 @MainActor
 final class AppModel: ObservableObject {
     @Published private(set) var catalog = Catalog()
-    @Published private(set) var session = Session()
+    @Published private(set) var session = AppModel.savedSession() { didSet { saveSession() } }
     @Published var query = "" { didSet { search() } }
     @Published private(set) var results: [SearchResult] = []
     @Published var selectedWorkflowID: String?
@@ -53,6 +53,18 @@ final class AppModel: ObservableObject {
             } catch { message = "Folder access expired or the drive is unavailable. Choose Workflow Folder to reconnect." }
         }
     }
+    // Non-secret input values are saved so they survive relaunches.
+    private static func savedSession() -> Session {
+        guard let data = UserDefaults.standard.data(forKey: "inputValues"), let session = try? JSONDecoder().decode(Session.self, from: data) else { return Session() }
+        return session
+    }
+    private func saveSession() {
+        if let data = try? JSONEncoder().encode(session.persistable) { UserDefaults.standard.set(data, forKey: "inputValues") }
+    }
+    func forgetSavedValues() {
+        UserDefaults.standard.removeObject(forKey: "inputValues")
+        var fresh = Session(); fresh.reconcile(catalog.workflows); session = fresh; copiedStepID = nil
+    }
     private func persist(_ url: URL) throws {
         let data = try url.bookmarkData(options: [.withSecurityScope], includingResourceValuesForKeys: nil, relativeTo: nil)
         UserDefaults.standard.set(data, forKey: "workflowFolder")
@@ -83,7 +95,8 @@ final class AppModel: ObservableObject {
     }
     private func apply(_ next: Catalog) {
         if let old = workflow, let new = next.workflows.first(where: { $0.id == old.id }), old != new { updatedWorkflowID = old.id }
-        catalog = next; session.reconcile(next.workflows)
+        catalog = next
+        if !next.ioFailure { session.reconcile(next.workflows) }
         if workflow == nil { selectedWorkflowID = nil; selectedStepID = nil }
         else if !workflow!.steps.contains(where: { $0.id == selectedStepID }) { selectedStepID = workflow!.steps.first?.id }
         let workflows = next.workflows
@@ -108,6 +121,7 @@ final class AppModel: ObservableObject {
     }
     func value(_ input: Input, workflow: Workflow) -> String { session.values[workflow.id]?[input.id] ?? input.defaultValue ?? "" }
     func set(_ value: String, input: Input, workflow: Workflow) { session.set(value, workflow: workflow.id, input: input.id); copiedStepID = nil }
+    func apply(_ preset: Preset, workflow: Workflow) { session.apply(preset, workflow: workflow.id); copiedStepID = nil }
     /// Previews mask secret inputs; only Copy renders the real value.
     func rendered(_ step: Step, workflow: Workflow) -> Result<String, Error> { Result { try Template.render(step, workflow: workflow, values: session.values[workflow.id] ?? [:], masked: true) } }
     func copy(_ step: Step, workflow: Workflow) {

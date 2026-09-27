@@ -103,6 +103,59 @@ final class CoreTests: XCTestCase {
         w.inputs[0].defaultValue = "new"; session.reconcile([w]); XCTAssertEqual(session.values[w.id]?["value"], "new")
         session.reconcile([]); XCTAssertTrue(session.values.isEmpty)
     }
+    func testPresets() throws {
+        let text = """
+        schema_version: 1
+        id: release
+        title: Release
+        shell: posix
+        inputs:
+          - id: repo
+            label: Repo
+            type: path
+          - id: mode
+            label: Mode
+            type: choice
+            options: [debug, release]
+          - id: token
+            label: Token
+            type: secret
+            required: false
+        presets:
+          - name: Framed
+            values: {repo: /framed, mode: release}
+          - name: Dashi
+            values: {repo: /dashi}
+        steps:
+          - id: go
+            title: Go
+            command: tool {{repo}} {{mode}}
+        """
+        let w = try WorkflowParser.parse(text, source: URL(fileURLWithPath: "/r"))
+        XCTAssertEqual(w.presets.map(\.name), ["Framed", "Dashi"])
+        var session = Session(); session.reconcile([w])
+        XCTAssertNil(session.matchingPreset(w))
+        session.apply(w.presets[0], workflow: w.id)
+        XCTAssertEqual(try Template.render(w.steps[0], workflow: w, values: session.values[w.id]!), "tool '/framed' 'release'")
+        XCTAssertEqual(session.matchingPreset(w)?.name, "Framed")
+        session.apply(w.presets[1], workflow: w.id)
+        XCTAssertEqual(session.values[w.id]?["mode"], "release")
+        XCTAssertEqual(session.matchingPreset(w)?.name, "Dashi")
+        for bad in ["values: {missing: x}", "values: {token: x}", "values: {mode: other}", "values: {repo: 12}", "values: {}", "values: {repo: x}\n    extra: y"] {
+            let broken = text.replacingOccurrences(of: "values: {repo: /dashi}", with: bad)
+            XCTAssertThrowsError(try WorkflowParser.parse(broken, source: URL(fileURLWithPath: "/r")), bad)
+        }
+        XCTAssertThrowsError(try WorkflowParser.parse(text.replacingOccurrences(of: "name: Dashi", with: "name: Framed"), source: URL(fileURLWithPath: "/r")))
+    }
+    func testSessionPersistence() throws {
+        var w = try parse(); w.inputs.append(Input(id: "token", label: "Token", type: .secret, description: "", required: false, defaultValue: nil, options: []))
+        var session = Session(); session.reconcile([w])
+        session.set("kept", workflow: w.id, input: "value"); session.set("hidden", workflow: w.id, input: "token")
+        var restored = try JSONDecoder().decode(Session.self, from: JSONEncoder().encode(session.persistable))
+        XCTAssertEqual(restored.values[w.id]?["value"], "kept"); XCTAssertNil(restored.values[w.id]?["token"])
+        restored.reconcile([w]); XCTAssertEqual(restored.values[w.id]?["value"], "kept"); XCTAssertEqual(restored.values[w.id]?["token"], "")
+        w.inputs[0].label = "Changed"; restored.reconcile([w]); XCTAssertEqual(restored.values[w.id]?["value"], "")
+    }
     func testDirectoryLifecycle() throws {
         let fm = FileManager.default; let root = fm.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         try fm.createDirectory(at: root, withIntermediateDirectories: true); defer { try? fm.removeItem(at: root) }

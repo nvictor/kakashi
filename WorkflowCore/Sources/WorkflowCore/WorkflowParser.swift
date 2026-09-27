@@ -21,7 +21,7 @@ public enum WorkflowParser {
             default: throw reader.error(nil, "$", "yaml", String(describing: error))
             }
         } catch { throw reader.error(nil, "$", "yaml", String(describing: error)) }
-        let fields = try reader.map(root, "$", allowed: ["schema_version", "id", "title", "description", "tags", "shell", "inputs", "steps"])
+        let fields = try reader.map(root, "$", allowed: ["schema_version", "id", "title", "description", "tags", "shell", "inputs", "presets", "steps"])
         guard let version = fields["schema_version"], version.tag == Tag(.int), version.scalar?.string == "1" else { throw reader.error(fields["schema_version"], "schema_version", "version", "Expected integer schema_version: 1.") }
         guard try reader.string(fields["shell"], "shell") == "posix" else { throw reader.error(fields["shell"], "shell", "shell", "Only posix is supported.") }
         let id = try reader.id(fields["id"], "id")
@@ -51,6 +51,25 @@ public enum WorkflowParser {
             inputs.append(Input(id: try reader.id(f["id"], path + ".id"), label: try reader.string(f["label"], path + ".label", nonempty: true), type: kind, description: try reader.optionalString(f["description"], path + ".description"), required: required, defaultValue: defaultValue, options: options))
         }
         guard Set(inputs.map(\.id)).count == inputs.count else { throw reader.error(fields["inputs"], "inputs", "duplicate-id", "Input IDs must be unique.") }
+        var presets: [Preset] = []
+        for (index, node) in try reader.array(fields["presets"], "presets", optional: true).enumerated() {
+            let path = "presets[\(index)]"
+            let f = try reader.map(node, path, allowed: ["name", "values"])
+            let name = try reader.string(f["name"], path + ".name", nonempty: true)
+            guard !presets.contains(where: { $0.name == name }) else { throw reader.error(f["name"], path + ".name", "duplicate-name", "Preset names must be unique.") }
+            guard let valuesNode = f["values"], case .mapping(let mapping) = valuesNode, !mapping.isEmpty else { throw reader.error(f["values"], path + ".values", "type", "Expected a nonempty mapping of input IDs to values.") }
+            var values: [String: String] = [:]
+            for (key, node) in mapping {
+                let inputID = try reader.string(key, path + ".values")
+                let field = path + ".values." + inputID
+                guard let input = inputs.first(where: { $0.id == inputID }) else { throw reader.error(key, field, "unknown-input", "Unknown input: \(inputID).") }
+                guard input.type != .secret else { throw reader.error(key, field, "secret", "Presets cannot set secret inputs. Keep credentials out of workflow files.") }
+                let value = try reader.string(node, field)
+                guard Template.validValue(value), input.type != .choice || input.options.contains(value) else { throw reader.error(node, field, "value", "Value must be a valid single-line value and belong to the choice options.") }
+                values[inputID] = value
+            }
+            presets.append(Preset(name: name, values: values))
+        }
         var steps: [Step] = []
         for (index, node) in try reader.array(fields["steps"], "steps").enumerated() {
             let path = "steps[\(index)]"
@@ -63,7 +82,7 @@ public enum WorkflowParser {
         }
         guard !steps.isEmpty else { throw reader.error(fields["steps"], "steps", "empty", "At least one step is required.") }
         guard Set(steps.map(\.id)).count == steps.count else { throw reader.error(fields["steps"], "steps", "duplicate-id", "Step IDs must be unique.") }
-        return Workflow(id: id, title: title, description: description, tags: tags, inputs: inputs, steps: steps, source: source)
+        return Workflow(id: id, title: title, description: description, tags: tags, inputs: inputs, steps: steps, source: source, presets: presets)
     }
 }
 

@@ -221,6 +221,7 @@ struct WorkflowDetail: View {
                                 Label("Shared inputs", systemImage: "slider.horizontal.3").font(.headline)
                                 Text("Fill in once. Used across the steps below.").font(.caption).foregroundStyle(.secondary)
                             }
+                            if !workflow.presets.isEmpty { PresetPicker(workflow: workflow) }
                             ForEach(workflow.inputs) { input in InputField(input: input, workflow: workflow).id(workflow.id + ":" + input.id) }
                         }.padding(16).background(.quaternary.opacity(0.45), in: RoundedRectangle(cornerRadius: 12))
                     }
@@ -242,6 +243,23 @@ struct WorkflowDetail: View {
             .onChange(of: model.selectedStepID) { _, id in
                 if !compact, let id { proxy.scrollTo(id == workflow.steps.first?.id ? "workflow-top" : id, anchor: .top) }
             }
+        }
+    }
+}
+struct PresetPicker: View {
+    @EnvironmentObject var model: AppModel
+    let workflow: Workflow
+    var body: some View {
+        let selection = Binding(get: { model.session.matchingPreset(workflow)?.name ?? "" }, set: { name in
+            if let preset = workflow.presets.first(where: { $0.name == name }) { model.apply(preset, workflow: workflow) }
+        })
+        VStack(alignment: .leading, spacing: 6) {
+            Text("Preset").font(.callout.weight(.medium))
+            Picker("Preset", selection: selection) {
+                Text("Custom").tag("")
+                ForEach(workflow.presets) { Text($0.name).tag($0.name) }
+            }.labelsHidden().accessibilityLabel("Preset")
+            Text("Fills several inputs at once. You can still edit them.").font(.caption).foregroundStyle(.secondary)
         }
     }
 }
@@ -482,7 +500,8 @@ struct PreferencesView: View {
                 Button("Check for Updates…") { model.checkForUpdates?() }
             }
             Section("Privacy") {
-                Text("Input values stay in memory until you quit. Use secret inputs for tokens and passwords: they are hidden in previews, never allowed as defaults, and cleared from the clipboard after 60 seconds.").font(.callout).foregroundStyle(.secondary)
+                Text("Kakashi saves input values on this Mac so they are ready next time. Secret inputs are never saved. Use secret inputs for tokens and passwords: they are hidden in previews, never allowed as defaults, and cleared from the clipboard after 60 seconds.").font(.callout).foregroundStyle(.secondary)
+                Button("Forget Saved Values") { model.forgetSavedValues() }
             }
         }.formStyle(.grouped).frame(width: 500, height: 460)
             .onChange(of: key) { _, _ in register() }.onChange(of: modifiers) { _, _ in register() }

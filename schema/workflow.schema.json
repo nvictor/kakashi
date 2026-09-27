@@ -42,6 +42,12 @@
         "$ref": "#/$defs/input"
       }
     },
+    "presets": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/preset"
+      }
+    },
     "steps": {
       "type": "array",
       "minItems": 1,
@@ -163,7 +169,32 @@
           "pattern": "\\S"
         }
       }
+    },
+    "preset": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "values"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "\\S"
+        },
+        "values": {
+          "type": "object",
+          "minProperties": 1,
+          "propertyNames": {
+            "pattern": "^[a-z][a-z0-9-]*$"
+          },
+          "additionalProperties": {
+            "type": "string",
+            "pattern": "^[^\\u0000\\r\\n]*$"
+          }
+        }
+      }
     }
   },
-  "$comment": "Semantic validator additionally checks ID uniqueness, defaults within choice options, and template syntax/context. YAML must contain one document, no aliases/anchors/custom tags/duplicate keys, and be UTF-8 under 1 MiB."
+  "$comment": "Semantic validator additionally checks ID uniqueness, defaults and preset values within choice options, preset keys naming declared non-secret inputs, unique preset names, and template syntax/context. YAML must contain one document, no aliases/anchors/custom tags/duplicate keys, and be UTF-8 under 1 MiB."
 }
