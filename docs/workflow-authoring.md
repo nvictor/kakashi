@@ -68,7 +68,7 @@ An empty required input blocks only steps referencing it. An optional unset inpu
 
 ## Presets
 
-Use presets when the same group of values repeats, such as one repository, project, and target per app. Picking a preset fills those inputs. Inputs it does not list keep their values, and every value stays editable.
+Use presets when the same group of values repeats, such as one repository, project, and target per app. Picking a preset fills those inputs. Each preset also remembers the other inputs you last typed with it, such as a version number, so they come back when you pick it again and never carry over from another preset. Inputs never typed with that preset start at their defaults. Every value stays editable.
 
 ```yaml
 presets:

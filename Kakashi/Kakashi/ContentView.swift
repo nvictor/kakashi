@@ -259,7 +259,7 @@ struct PresetPicker: View {
                 Text("Custom").tag("")
                 ForEach(workflow.presets) { Text($0.name).tag($0.name) }
             }.labelsHidden().accessibilityLabel("Preset")
-            Text("Fills several inputs at once. You can still edit them.").font(.caption).foregroundStyle(.secondary)
+            Text("Fills several inputs at once and restores what you last typed with it. You can still edit them.").font(.caption).foregroundStyle(.secondary)
         }
     }
 }

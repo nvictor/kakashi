@@ -121,6 +121,10 @@ final class CoreTests: XCTestCase {
             label: Token
             type: secret
             required: false
+          - id: version
+            label: Version
+            type: string
+            default: '1.0'
         presets:
           - name: Framed
             values: {repo: /framed, mode: release}
@@ -138,9 +142,19 @@ final class CoreTests: XCTestCase {
         session.apply(w.presets[0], workflow: w.id)
         XCTAssertEqual(try Template.render(w.steps[0], workflow: w, values: session.values[w.id]!), "tool '/framed' 'release'")
         XCTAssertEqual(session.matchingPreset(w)?.name, "Framed")
+        session.set("0.0.26", workflow: w.id, input: "version"); session.set("hidden", workflow: w.id, input: "token")
         session.apply(w.presets[1], workflow: w.id)
-        XCTAssertEqual(session.values[w.id]?["mode"], "release")
-        XCTAssertEqual(session.matchingPreset(w)?.name, "Dashi")
+        XCTAssertEqual(session.values[w.id]?["mode"], ""); XCTAssertEqual(session.values[w.id]?["version"], "1.0"); XCTAssertEqual(session.values[w.id]?["token"], "")
+        session.set("2.3", workflow: w.id, input: "version")
+        session.apply(w.presets[0], workflow: w.id)
+        XCTAssertEqual(session.values[w.id]?["version"], "0.0.26"); XCTAssertEqual(session.values[w.id]?["token"], "hidden")
+        var restored = try JSONDecoder().decode(Session.self, from: JSONEncoder().encode(session.persistable))
+        restored.reconcile([w]); restored.apply(w.presets[0], workflow: w.id)
+        XCTAssertEqual(restored.values[w.id]?["version"], "0.0.26"); XCTAssertEqual(restored.values[w.id]?["token"], "")
+        restored.set("custom", workflow: w.id, input: "repo"); restored.set("9.9", workflow: w.id, input: "version")
+        restored.apply(w.presets[1], workflow: w.id); XCTAssertEqual(restored.values[w.id]?["version"], "2.3")
+        restored.apply(w.presets[0], workflow: w.id); XCTAssertEqual(restored.values[w.id]?["version"], "0.0.26")
+        XCTAssertEqual(session.matchingPreset(w)?.name, "Framed")
         for bad in ["values: {missing: x}", "values: {token: x}", "values: {mode: other}", "values: {repo: 12}", "values: {}", "values: {repo: x}\n    extra: y"] {
             let broken = text.replacingOccurrences(of: "values: {repo: /dashi}", with: bad)
             XCTAssertThrowsError(try WorkflowParser.parse(broken, source: URL(fileURLWithPath: "/r")), bad)
