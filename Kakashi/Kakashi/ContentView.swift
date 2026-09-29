@@ -193,6 +193,7 @@ struct WorkflowDetail: View {
     @EnvironmentObject var model: AppModel
     let workflow: Workflow
     let compact: Bool
+    @FocusState private var detailFocused: Bool
     var body: some View {
         ScrollViewReader { proxy in
             ScrollView {
@@ -237,7 +238,16 @@ struct WorkflowDetail: View {
                     }
                 }.padding(compact ? 18 : 28).frame(maxWidth: 820, alignment: .leading).frame(maxWidth: .infinity)
             }
+            .focusable().focused($detailFocused).focusEffectDisabled()
+            .onKeyPress(characters: .decimalDigits, phases: .down) { press in
+                guard press.modifiers.isEmpty, let n = Int(press.characters), n >= 1, n <= workflow.steps.count else { return .ignored }
+                let step = workflow.steps[n - 1]
+                model.selectedStepID = step.id
+                model.copy(step, workflow: workflow)
+                return .handled
+            }
             .onAppear {
+                detailFocused = true
                 if !compact, let id = model.selectedStepID, id != workflow.steps.first?.id { proxy.scrollTo(id, anchor: .top) }
             }
             .onChange(of: model.selectedStepID) { _, id in
@@ -368,7 +378,7 @@ struct StepCard: View {
                 .tint((try? result.get()) == nil ? Color.secondary : Color.accentColor)
                 .disabled((try? result.get()) == nil || model.scanning || model.copying)
                 .accessibilityLabel(copied ? "Copied \(step.title)" : "Copy \(step.title)")
-                .help(missing.isEmpty ? "Copy command to the clipboard" : "Fill in \(missing.joined(separator: ", ")) to copy")
+                .help(missing.isEmpty ? "Copy command to the clipboard (press \(number))" : "Fill in \(missing.joined(separator: ", ")) to copy")
             }
             switch result {
             case .success(let command):
