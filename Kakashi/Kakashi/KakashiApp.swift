@@ -69,8 +69,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     @objc func toggle() {
         if popover.isShown { popover.performClose(nil); return }
         guard let button = status.button else { return }
-        // A new root gives search focus on every opening while the shared model retains inputs.
-        model.quickDetail = false
+        // A new root gives focus on every opening while the shared model retains the query, selection, and detail view.
         popover.contentViewController = NSHostingController(rootView: QuickView().environmentObject(model))
         NSApp.activate(ignoringOtherApps: true)
         popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
