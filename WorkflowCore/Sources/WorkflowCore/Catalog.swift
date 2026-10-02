@@ -61,17 +61,16 @@ public struct SearchIndex: Sendable {
     private var entries: [Entry] = []
     public init(_ workflows: [Workflow]) {
         for w in workflows {
-            let context = ([w.title, w.description] + w.tags).joined(separator: " ").lowercased()
-            entries.append(Entry(result: SearchResult(workflowID: w.id, title: w.title, subtitle: (["\(w.steps.count) step\(w.steps.count == 1 ? "" : "s")"] + (w.tags.isEmpty ? [] : [w.tags.joined(separator: ", ")])).joined(separator: " · ")), title: w.title.lowercased(), text: context))
-            for s in w.steps {
-                entries.append(Entry(result: SearchResult(workflowID: w.id, stepID: s.id, title: s.title, subtitle: w.title), title: s.title.lowercased(), text: context + " " + [s.title, s.description, s.command].joined(separator: " ").lowercased()))
-            }
+            // Only workflows are listed, but step text still matches so a command finds its workflow.
+            let stepText = w.steps.flatMap { [$0.title, $0.description, $0.command] }
+            let text = ([w.title, w.description] + w.tags + stepText).joined(separator: " ").lowercased()
+            entries.append(Entry(result: SearchResult(workflowID: w.id, title: w.title, subtitle: (["\(w.steps.count) step\(w.steps.count == 1 ? "" : "s")"] + (w.tags.isEmpty ? [] : [w.tags.joined(separator: ", ")])).joined(separator: " · ")), title: w.title.lowercased(), text: text))
         }
     }
     public func search(_ query: String) -> [SearchResult] {
         let tokens = query.lowercased().split(whereSeparator: \.isWhitespace).map(String.init)
         let normalized = tokens.joined(separator: " ")
-        if tokens.isEmpty { return entries.filter { $0.result.stepID == nil }.sorted { ($0.title, $0.result.id) < ($1.title, $1.result.id) }.map(\.result) }
+        if tokens.isEmpty { return entries.sorted { ($0.title, $0.result.id) < ($1.title, $1.result.id) }.map(\.result) }
         return entries.filter { e in tokens.allSatisfy { e.text.contains($0) } }.map { e -> (Int, Entry) in
             let score = e.title == normalized ? 0 : e.title.hasPrefix(normalized) ? 1 : tokens.allSatisfy({ e.title.contains($0) }) ? 2 : 3
             return (score, e)

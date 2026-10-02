@@ -195,7 +195,8 @@ final class CoreTests: XCTestCase {
         w.steps[0].title = "Inspect status"; w.steps[0].command = "git status"
         let index = SearchIndex([w])
         XCTAssertEqual(index.search("").count, 1)
-        XCTAssertEqual(index.search("SWIFT status").first?.stepID, "show")
+        XCTAssertEqual(index.search("SWIFT status").count, 1)
+        XCTAssertTrue(index.search("SWIFT status").allSatisfy { $0.stepID == nil })
         XCTAssertTrue(index.search("missing status").isEmpty)
         XCTAssertEqual(index.search("release project").first?.stepID, nil)
         var other = w; other.id = "another"
@@ -209,7 +210,7 @@ final class CoreTests: XCTestCase {
         }
         let index = SearchIndex(workflows); _ = index.search("swift status")
         let start = ContinuousClock.now
-        for _ in 0..<10 { XCTAssertEqual(index.search("swift status").count, 10000) }
+        for _ in 0..<10 { XCTAssertEqual(index.search("swift status").count, 1000) }
         print("SEARCH_BENCHMARK mean over 10 searches: \(start.duration(to: .now) / 10)")
     }
 }

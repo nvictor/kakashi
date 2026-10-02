@@ -26,7 +26,7 @@ struct QuickView: View {
             } else {
                 HStack(spacing: 8) {
                     Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
-                    SearchField(text: $model.query, placeholder: "Search workflows and steps", onSubmit: openSelected, onMove: move)
+                    SearchField(text: $model.query, placeholder: "Search workflows", onSubmit: openSelected, onMove: move)
                     if !model.query.isEmpty {
                         Button { model.query = "" } label: { Image(systemName: "xmark.circle.fill") }
                             .buttonStyle(.plain).foregroundStyle(.secondary).accessibilityLabel("Clear search")
@@ -132,7 +132,7 @@ struct BrowserView: View {
                         }.foregroundStyle(.secondary).padding()
                     }
                 }
-                .searchable(text: $model.query, placement: .sidebar, prompt: "Search workflows and steps")
+                .searchable(text: $model.query, placement: .sidebar, prompt: "Search workflows")
                 .onChange(of: selection) { _, id in if let result = model.results.first(where: { $0.id == id }) { model.select(result) } }
                 .safeAreaInset(edge: .bottom) {
                     VStack(alignment: .leading, spacing: 8) {
@@ -246,6 +246,14 @@ struct WorkflowDetail: View {
                 model.copy(step, workflow: workflow)
                 return .handled
             }
+            .onKeyPress(keys: ["n", "p"], phases: .down) { press in
+                guard press.modifiers.isEmpty else { return .ignored }
+                let current = workflow.steps.firstIndex { $0.id == model.selectedStepID } ?? 0
+                let target = press.key == "n" ? current + 1 : current - 1
+                guard workflow.steps.indices.contains(target) else { return .handled }
+                model.selectedStepID = workflow.steps[target].id
+                return .handled
+            }
             .onAppear {
                 detailFocused = true
                 if !compact, let id = model.selectedStepID, id != workflow.steps.first?.id { proxy.scrollTo(id, anchor: .top) }
@@ -341,12 +349,12 @@ struct StepNavigation: View {
     var body: some View {
         HStack(spacing: 8) {
             Button { model.selectedStepID = workflow.steps[index - 1].id } label: { Image(systemName: "chevron.left") }
-                .disabled(index == 0).accessibilityLabel("Previous step").help("Previous step")
+                .disabled(index == 0).accessibilityLabel("Previous step").help("Previous step (p)")
             Picker("Step", selection: Binding(get: { workflow.steps[index].id }, set: { model.selectedStepID = $0 })) {
                 ForEach(Array(workflow.steps.enumerated()), id: \.element.id) { i, step in Text("\(i + 1). \(step.title)").tag(step.id) }
             }.labelsHidden().frame(maxWidth: .infinity).accessibilityLabel("Choose a step")
             Button { model.selectedStepID = workflow.steps[index + 1].id } label: { Image(systemName: "chevron.right") }
-                .disabled(index == workflow.steps.count - 1).accessibilityLabel("Next step").help("Next step")
+                .disabled(index == workflow.steps.count - 1).accessibilityLabel("Next step").help("Next step (n)")
         }
     }
 }
