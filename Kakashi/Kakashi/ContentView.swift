@@ -240,14 +240,14 @@ struct WorkflowDetail: View {
             }
             .focusable().focused($detailFocused).focusEffectDisabled()
             .onKeyPress(characters: .decimalDigits, phases: .down) { press in
-                guard press.modifiers.isEmpty, let n = Int(press.characters), n >= 1, n <= workflow.steps.count else { return .ignored }
+                guard detailFocused, press.modifiers.isEmpty, let n = Int(press.characters), n >= 1, n <= workflow.steps.count else { return .ignored }
                 let step = workflow.steps[n - 1]
                 model.selectedStepID = step.id
                 model.copy(step, workflow: workflow)
                 return .handled
             }
             .onKeyPress(keys: ["n", "p"], phases: .down) { press in
-                guard press.modifiers.isEmpty else { return .ignored }
+                guard detailFocused, press.modifiers.isEmpty else { return .ignored }
                 let current = workflow.steps.firstIndex { $0.id == model.selectedStepID } ?? 0
                 let target = press.key == "n" ? current + 1 : current - 1
                 guard workflow.steps.indices.contains(target) else { return .handled }
