@@ -20,6 +20,7 @@ final class AppModel: ObservableObject {
     @Published var quickDetail = false
     var showBrowser: (() -> Void)?
     var showSettings: (() -> Void)?
+    var showExamplePicker: (() -> Void)?
     var closePopover: (() -> Void)?
     var checkForUpdates: (() -> Void)?
     private var access: URL?
@@ -156,18 +157,25 @@ final class AppModel: ObservableObject {
         Task { try? await Task.sleep(for: .seconds(60)); if pasteboard.changeCount == change { pasteboard.clearContents() } }
         return true
     }
-    func installExamples() {
+    struct Example: Identifiable { let url: URL; let title: String; let description: String; var id: URL { url } }
+    func bundledExamples() -> [Example] {
+        let urls = Bundle.main.urls(forResourcesWithExtension: "yaml", subdirectory: nil) ?? []
+        return urls.filter { $0.lastPathComponent.hasSuffix(".workflow.yaml") }.compactMap { url in
+            guard let text = try? String(contentsOf: url, encoding: .utf8), let workflow = try? WorkflowParser.parse(text, source: url) else { return nil }
+            return Example(url: url, title: workflow.title, description: workflow.description)
+        }.sorted { $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedAscending }
+    }
+    func installExamples(_ examples: [Example]) {
         guard let folder else { chooseFolder(); return }
         do {
-            guard let urls = Bundle.main.urls(forResourcesWithExtension: "yaml", subdirectory: nil), !urls.isEmpty else { message = "Bundled examples are unavailable."; return }
             var count = 0
-            for source in urls where source.lastPathComponent.hasSuffix(".workflow.yaml") {
+            for source in examples.map(\.url) {
                 let destination = folder.appendingPathComponent(source.lastPathComponent)
                 if FileManager.default.fileExists(atPath: destination.path) { continue }
                 // copyItem fails if the destination appears concurrently; it never overwrites.
                 try FileManager.default.copyItem(at: source, to: destination); count += 1
             }
-            message = count == 0 ? "Examples are already in this folder. Existing files were kept." : "Added \(count) example \(count == 1 ? "workflow" : "workflows"). Existing files were kept."; reload()
+            message = count == 0 ? "Selected examples are already in this folder. Existing files were kept." : "Added \(count) example \(count == 1 ? "workflow" : "workflows"). Existing files were kept."; reload()
         } catch { message = "Could not install examples: \(error.localizedDescription)" }
     }
 }

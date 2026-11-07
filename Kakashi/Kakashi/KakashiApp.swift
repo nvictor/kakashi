@@ -30,6 +30,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let popover = NSPopover()
     private var browser: NSWindow?
     private var settings: NSWindow?
+    private var examples: NSWindow?
     private var hotKey: EventHotKeyRef?
     private var eventHandler: EventHandlerRef?
     private var escapeMonitor: Any?
@@ -43,6 +44,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         popover.behavior = .transient; popover.contentSize = NSSize(width: 490, height: 650)
         model.showBrowser = { [weak self] in self?.openBrowser() }
         model.showSettings = { [weak self] in self?.openSettings() }
+        model.showExamplePicker = { [weak self] in self?.openExamplePicker() }
         model.closePopover = { [weak self] in self?.popover.performClose(nil) }
         model.checkForUpdates = { [weak self] in self?.popover.performClose(nil); self?.updater.checkForUpdates() }
         var spec = EventTypeSpec(eventClass: OSType(kEventClassKeyboard), eventKind: UInt32(kEventHotKeyPressed))
@@ -96,6 +98,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             window.isReleasedWhenClosed = false; window.center(); settings = window
         }
         NSApp.activate(ignoringOtherApps: true); settings?.makeKeyAndOrderFront(nil)
+    }
+    func openExamplePicker() {
+        popover.performClose(nil)
+        guard model.folder != nil else { model.chooseFolder(); return }
+        examples?.close()
+        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 460, height: 420), styleMask: [.titled, .closable], backing: .buffered, defer: false)
+        window.title = "Install Examples"
+        window.contentViewController = NSHostingController(rootView: ExamplePickerView(close: { [weak window] in window?.close() }).environmentObject(model))
+        window.isReleasedWhenClosed = false; window.center(); examples = window
+        NSApp.activate(ignoringOtherApps: true); window.makeKeyAndOrderFront(nil)
     }
     func registerShortcut() {
         if let hotKey { UnregisterEventHotKey(hotKey) }; hotKey = nil

@@ -318,7 +318,7 @@ struct LibraryEmptyView: View {
                 if model.catalog.ioFailure {
                     Button("Choose Folder…", action: model.chooseFolder).buttonStyle(.borderedProminent)
                 } else if model.catalog.workflows.isEmpty && model.catalog.diagnostics.isEmpty {
-                    Button("Install Examples", action: model.installExamples).buttonStyle(.borderedProminent)
+                    Button("Install Examples…", action: { model.showExamplePicker?() }).buttonStyle(.borderedProminent)
                     Button("Choose Another Folder…", action: model.chooseFolder).buttonStyle(.borderless)
                 } else if !model.query.isEmpty {
                     Button("Clear Search") { model.query = "" }.buttonStyle(.bordered)
@@ -336,7 +336,7 @@ struct LibraryEmptyView: View {
         if model.catalog.ioFailure { return "Choose your workflow folder again to restore access." }
         if model.catalog.workflows.isEmpty {
             return model.catalog.diagnostics.isEmpty
-                ? "Add workflow files to this folder, or start with three editable examples."
+                ? "Add workflow files to this folder, or start with editable examples."
                 : "Open the source problems below to see which files need fixing."
         }
         return "Try a task name, tag, or command."
@@ -482,7 +482,7 @@ struct AppActions: View {
     var body: some View {
         Section {
             Button("Choose Workflow Folder…", systemImage: "folder", action: model.chooseFolder)
-            Button("Install Examples", systemImage: "square.and.arrow.down", action: model.installExamples).disabled(model.folder == nil)
+            Button("Install Examples…", systemImage: "square.and.arrow.down", action: { model.showExamplePicker?() }).disabled(model.folder == nil)
             Button("Reload", systemImage: "arrow.clockwise", action: model.reload).disabled(model.folder == nil)
         }
         Section {
@@ -503,7 +503,7 @@ struct PreferencesView: View {
         Form {
             Section("Workflow folder") {
                 Text(model.folder?.path ?? "No folder selected").textSelection(.enabled).font(.callout)
-                HStack { Button("Choose Folder…", action: model.chooseFolder).help("Choose the folder Kakashi reads"); Button("Install Examples", action: model.installExamples).disabled(model.folder == nil).help("Copy three example workflows into the folder. Existing files are kept.") }
+                HStack { Button("Choose Folder…", action: model.chooseFolder).help("Choose the folder Kakashi reads"); Button("Install Examples…", action: { model.showExamplePicker?() }).disabled(model.folder == nil).help("Choose example workflows to copy into the folder. Existing files are kept.") }
             }
             Section("Global shortcut") {
                 Picker("Modifiers", selection: $modifiers) {
@@ -524,5 +524,34 @@ struct PreferencesView: View {
             }
         }.formStyle(.grouped).frame(width: 500, height: 460)
             .onChange(of: key) { _, _ in register() }.onChange(of: modifiers) { _, _ in register() }
+    }
+}
+
+struct ExamplePickerView: View {
+    @EnvironmentObject var model: AppModel
+    let close: () -> Void
+    @State private var examples: [AppModel.Example] = []
+    @State private var selected: Set<URL> = []
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Install Examples").font(.title3.weight(.semibold))
+            Text("Choose the workflows to copy into your folder. Existing files are kept.").font(.callout).foregroundStyle(.secondary)
+            List(examples) { example in
+                Toggle(isOn: Binding(get: { selected.contains(example.id) }, set: { if $0 { selected.insert(example.id) } else { selected.remove(example.id) } })) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(example.title).font(.headline)
+                        Text(example.description).font(.caption).foregroundStyle(.secondary)
+                    }
+                }
+            }.frame(minHeight: 200)
+            HStack {
+                Button(selected.count == examples.count ? "Select None" : "Select All") { selected = selected.count == examples.count ? [] : Set(examples.map(\.id)) }.buttonStyle(.borderless)
+                Spacer()
+                Button("Cancel", action: close).keyboardShortcut(.cancelAction)
+                Button("Install") { model.installExamples(examples.filter { selected.contains($0.id) }); close() }
+                    .keyboardShortcut(.defaultAction).disabled(selected.isEmpty)
+            }
+        }.padding(20).frame(width: 460, height: 420)
+        .onAppear { examples = model.bundledExamples(); selected = Set(examples.map(\.id)) }
     }
 }

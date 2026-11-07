@@ -1,0 +1,10 @@
+schema_version: 1
+id: dock-spacer
+title: Add a Dock spacer
+description: Add an empty spacer tile to the end of the apps section of the macOS Dock, then restart the Dock. Drag the spacer to where you want it.
+tags: [macos, dock]
+shell: posix
+steps:
+  - id: add-spacer
+    title: Add spacer and restart Dock
+    command: defaults write com.apple.dock persistent-apps -array-add '{"tile-type"="spacer-tile";}' && killall Dock
