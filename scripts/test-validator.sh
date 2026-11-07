@@ -14,7 +14,7 @@ check() {
   test "$actual" -eq "$expected" || { cat "$tmp/output.json"; echo "Expected $expected, got $actual"; exit 1; }
 }
 check 0 validate examples --format json
-python3 -c 'import json,sys; r=json.load(open(sys.argv[1])); assert r["valid"] and r["files_checked"] == 3 and not r["diagnostics"]' "$tmp/output.json"
+python3 -c 'import json,sys; r=json.load(open(sys.argv[1])); assert r["valid"] and r["files_checked"] == 4 and not r["diagnostics"]' "$tmp/output.json"
 mkdir "$tmp/empty"
 check 0 validate "$tmp/empty" --format json
 python3 -c 'import json,sys; r=json.load(open(sys.argv[1])); assert r["valid"] and r["files_checked"] == 0' "$tmp/output.json"
