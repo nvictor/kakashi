@@ -7,7 +7,7 @@
 	<key>SUEnableInstallerLauncherService</key>
 	<true/>
 	<key>SUFeedURL</key>
-	<string>https://github.com/nvictor/kakashi/releases/latest/download/appcast.xml</string>
+	<string>https://raw.githubusercontent.com/nvictor/macos-releases/main/Kakashi/appcast.xml</string>
 	<key>SUPublicEDKey</key>
 	<string>$(SPARKLE_PUBLIC_ED_KEY)</string>
 </dict>

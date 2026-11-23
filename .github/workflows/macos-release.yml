@@ -140,19 +140,30 @@ jobs:
           chmod 600 build/sparkle_ed25519.key
           build/DerivedData/SourcePackages/artifacts/sparkle/Sparkle/bin/generate_appcast \
             --ed-key-file build/sparkle_ed25519.key \
-            --download-url-prefix "https://github.com/nvictor/kakashi/releases/download/${RELEASE_TAG}/" \
+            --download-url-prefix "https://github.com/nvictor/macos-releases/releases/download/kakashi-${RELEASE_TAG}/" \
             build/sparkle-updates
 
-      - name: Upload DMG and Sparkle appcast to Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ env.RELEASE_TAG }}
-          files: |
-            build/Kakashi.dmg
-            build/sparkle-updates/appcast.xml
-            build/sparkle-updates/*.delta
+      - name: Publish to macos-releases
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.RELEASES_TOKEN }}
+        run: |
+          test -n "$GH_TOKEN"
+          shopt -s nullglob
+          TAG="${RELEASE_TAG}"
+          VERSION="${TAG#v}"
+          gh release create "kakashi-$TAG" "build/Kakashi.dmg" build/sparkle-updates/*.delta \
+            --repo nvictor/macos-releases \
+            --title "Kakashi $VERSION" \
+            --notes "Kakashi $VERSION"
+          git clone "https://x-access-token:$GH_TOKEN@github.com/nvictor/macos-releases.git" build/releases
+          mkdir -p "build/releases/Kakashi"
+          cp build/sparkle-updates/appcast.xml "build/releases/Kakashi/appcast.xml"
+          cd build/releases
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "Kakashi/appcast.xml"
+          git commit -m "Publish Kakashi $VERSION"
+          git push origin main
 
       - name: Remove signing material
         if: always()
